@@ -10,7 +10,7 @@ PORT = 8888
 
 GITHUB_PERSONAL_ACCESS_TOKEN = ''
 #or
-GITHUB_USER_PASSWORD = ''
+GITHUB_USER_PASSWORD = 'emengine:AMDathlon4321'
 CONTENT_TYPE = 'text/x-markdown'
 USER_AGENT = 'SimpleHTTPServer 1.0'
 API_URL = 'https://api.github.com/markdown/raw'
