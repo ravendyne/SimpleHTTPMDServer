@@ -2,28 +2,52 @@
 
 #https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
+import os
+import sys
+
 import SimpleHTTPServer
-import SocketServer
+import BaseHTTPServer
+import ConfigParser
+import argparse
 
 import pycurl
 from StringIO import StringIO
 import json
 
-import os
-import sys
+
+parser = argparse.ArgumentParser(description='SimpleHTTPMDServer to serve formatted Github flavored Markdown files.')
+parser.add_argument('-b,', '--bind', help='ip address to bind to, i.e. 192.168.0.25', default='127.0.0.1')
+parser.add_argument('-t,', '--port', help='port to use, i.e. 8090', type=int, default=8000)
+parser.add_argument('-u,', '--user', help='github user for API authentication', default='')
+parser.add_argument('-p,', '--password', help="github user's password for API authentication", default='')
+
+Config = ConfigParser.ConfigParser()
+Config.read("server.conf")
+
+args = parser.parse_args()
+server_options = dict(Config.items('server'))
+github_options = dict(Config.items('github'))
+
+print server_options
+print github_options
+
+# server config
+HOST = server_options['host'] if 'host' in server_options else args.bind
+PORT = server_options['port'] if 'port' in server_options else args.port
+USER_AGENT = server_options['user-agent'] if 'user-agent' in server_options else 'SimpleHTTPServer 1.0'
 
 
-import mdconfig as conf
+# github config
+API_URL = github_options['github-api-url'] # i.e. 'https://api.github.com/markdown'
 
+GITHUB_PERSONAL_ACCESS_TOKEN = github_options['github-token'] if 'github-token' in github_options else ''
 
+GITHUB_USER = github_options['github-user'] if 'github-user' in github_options else args.user
+GITHUB_PASSWORD = github_options['github-password'] if 'github-password' in github_options else args.password
 
-PORT = conf.port
+GITHUB_USER_PASSWORD = GITHUB_USER + ':' + GITHUB_PASSWORD if GITHUB_USER and GITHUB_PASSWORD else ''
 
-GITHUB_PERSONAL_ACCESS_TOKEN = conf.githubToken
-GITHUB_USER_PASSWORD = conf.githubUser + ':' + conf.githubPassword if conf.githubUser and conf.githubPassword else ''
 CONTENT_TYPE = 'text/x-markdown'
-USER_AGENT = conf.userAgent #'SimpleHTTPServer 1.0'
-API_URL = conf.githubApiUrl #'https://api.github.com/markdown'
 
 
 __location__ = os.path.realpath(os.path.dirname(__file__))
@@ -111,17 +135,10 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 # if the script is called with user:pass parameter, get it
 # if not, we'll use anonymous access which is limited to 60 calls per hour
-for arg in sys.argv:
-    print arg
-    if ":" in arg:
-        GITHUB_USER_PASSWORD = arg
 
 
-Handler = MyRequestHandler
+httpd = BaseHTTPServer.HTTPServer((HOST, PORT), MyRequestHandler)
 
-
-httpd = SocketServer.TCPServer(("", PORT), Handler)
-
-print "Serving at http://127.0.0.1:%s/" % PORT
+print "Serving at http://%s:%s/" % (HOST, PORT)
 httpd.serve_forever()
 
