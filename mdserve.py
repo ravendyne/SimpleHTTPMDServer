@@ -1,6 +1,11 @@
 #!/usr/bin/python
 
-#https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+"""
+    Doc goes here.
+    I guess... ;)
+"""
+
+__version__ = '1.0.0'
 
 import os
 import sys
@@ -15,46 +20,47 @@ from StringIO import StringIO
 import json
 
 
-parser = argparse.ArgumentParser(description='SimpleHTTPMDServer to serve formatted Github flavored Markdown files.')
-parser.add_argument('-b,', '--bind', help='ip address to bind to, i.e. 192.168.0.25', default='127.0.0.1')
-parser.add_argument('-t,', '--port', help='port to use, i.e. 8090', type=int, default=8000)
-parser.add_argument('-u,', '--user', help='github user for API authentication', default='')
-parser.add_argument('-p,', '--password', help="github user's password for API authentication", default='')
+def setup_environment():
+    parser = argparse.ArgumentParser(description='SimpleHTTPMDServer to serve formatted Github flavored Markdown files.')
+    parser.add_argument('-b,', '--bind', help='ip address to bind to, i.e. 192.168.0.25', default='127.0.0.1')
+    parser.add_argument('-t,', '--port', help='port to use, i.e. 8090', type=int, default=8000)
+    parser.add_argument('-u,', '--user', help='github user for API authentication', default='')
+    parser.add_argument('-p,', '--password', help="github user's password for API authentication", default='')
 
-Config = ConfigParser.ConfigParser()
-Config.read("server.conf")
+    Config = ConfigParser.ConfigParser()
+    Config.read("server.conf")
 
-args = parser.parse_args()
-server_options = dict(Config.items('server'))
-github_options = dict(Config.items('github'))
+    args = parser.parse_args()
+    server_options = dict(Config.items('server'))
+    github_options = dict(Config.items('github'))
 
-print server_options
-print github_options
+    print server_options
+    print github_options
 
-# server config
-HOST = server_options['host'] if 'host' in server_options else args.bind
-PORT = server_options['port'] if 'port' in server_options else args.port
-USER_AGENT = server_options['user-agent'] if 'user-agent' in server_options else 'SimpleHTTPServer 1.0'
-
-
-# github config
-API_URL = github_options['github-api-url'] # i.e. 'https://api.github.com/markdown'
-
-GITHUB_PERSONAL_ACCESS_TOKEN = github_options['github-token'] if 'github-token' in github_options else ''
-
-GITHUB_USER = github_options['github-user'] if 'github-user' in github_options else args.user
-GITHUB_PASSWORD = github_options['github-password'] if 'github-password' in github_options else args.password
-
-GITHUB_USER_PASSWORD = GITHUB_USER + ':' + GITHUB_PASSWORD if GITHUB_USER and GITHUB_PASSWORD else ''
-
-CONTENT_TYPE = 'text/x-markdown'
+    # server config
+    HOST = server_options['host'] if 'host' in server_options else args.bind
+    PORT = int(server_options['port']) if 'port' in server_options else args.port
+    USER_AGENT = server_options['user-agent'] if 'user-agent' in server_options else 'SimpleHTTPServer 1.0'
 
 
-__location__ = os.path.realpath(os.path.dirname(__file__))
-MARKDOWN_BODY_CSS = open(os.path.join(__location__, 'files/markdown_body.css'), 'r').read()
-GITHUB_MARKDOWN_CSS = open(os.path.join(__location__, 'files/github_markdown.css'), 'r').read()
-HTML_HEAD = open(os.path.join(__location__, 'files/head.html'), 'r').read()
-HTML_TAIL = open(os.path.join(__location__, 'files/tail.html'), 'r').read()
+    # github config
+    API_URL = github_options['github-api-url'] # i.e. 'https://api.github.com/markdown'
+
+    GITHUB_PERSONAL_ACCESS_TOKEN = github_options['github-token'] if 'github-token' in github_options else ''
+
+    GITHUB_USER = github_options['github-user'] if 'github-user' in github_options else args.user
+    GITHUB_PASSWORD = github_options['github-password'] if 'github-password' in github_options else args.password
+
+    GITHUB_USER_PASSWORD = GITHUB_USER + ':' + GITHUB_PASSWORD if GITHUB_USER and GITHUB_PASSWORD else ''
+
+    CONTENT_TYPE = 'text/x-markdown'
+
+
+    __location__ = os.path.realpath(os.path.dirname(__file__))
+    MARKDOWN_BODY_CSS = open(os.path.join(__location__, 'files/markdown_body.css'), 'r').read()
+    GITHUB_MARKDOWN_CSS = open(os.path.join(__location__, 'files/github_markdown.css'), 'r').read()
+    HTML_HEAD = open(os.path.join(__location__, 'files/head.html'), 'r').read()
+    HTML_TAIL = open(os.path.join(__location__, 'files/tail.html'), 'r').read()
 
 
 
@@ -98,6 +104,19 @@ def getGFM(filePath):
     #if you need headers
     c.setopt(c.HEADERFUNCTION, header.write)
 
+    # c.setopt(pycurl.SSL_VERIFYPEER, 1)
+    # c.setopt(pycurl.SSL_VERIFYHOST, 2)
+    # c.setopt(pycurl.CAINFO, "/path/to/updated-certificate-chain.pem")
+
+    # c.setopt(pycurl.SSLCERTTYPE, "PEM")
+    # c.setopt(pycurl.SSLCERT, "/path/to/client-cert.pem")
+    # if the client cert file has password...
+    # c.setopt(pycurl.KEYPASSWD, "<password here>")
+
+    # or just use:
+    c.setopt(pycurl.SSL_VERIFYPEER, 0)
+    c.setopt(pycurl.SSL_VERIFYHOST, 0)
+
     #for debugging
     #c.setopt(c.VERBOSE, True)
     c.perform()
@@ -136,9 +155,10 @@ class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 # if the script is called with user:pass parameter, get it
 # if not, we'll use anonymous access which is limited to 60 calls per hour
 
+if __name__ == '__main__':
+    setup_environment()
+    httpd = BaseHTTPServer.HTTPServer((HOST, PORT), MyRequestHandler)
 
-httpd = BaseHTTPServer.HTTPServer((HOST, PORT), MyRequestHandler)
-
-print "Serving at http://%s:%s/" % (HOST, PORT)
-httpd.serve_forever()
+    print "Serving at http://%s:%s/" % (HOST, PORT)
+    httpd.serve_forever()
 
