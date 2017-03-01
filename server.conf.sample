@@ -1,0 +1,17 @@
+[server]
+# host: localhost
+port: 8888
+user-agent: 'SimpleHTTPServer 1.0'
+
+
+
+[github]
+# github-api-url: 'https://api.github.com/markdown/raw'
+github-api-url: 'https://api.github.com/markdown'
+
+; github authentication parameters:
+; APU token...
+# github-token: ''
+; ...or username / password
+github-user: ''
+github-password: ''
